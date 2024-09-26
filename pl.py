@@ -4,6 +4,10 @@ import numpy as np
 import seaborn as sns
 import requests
 from datetime import datetime, timedelta
+import tensorflow as tf
+import numpy as np
+import os
+import matplotlib.pyplot as plt
 
 
 # df = pd.DataFrame({
@@ -378,3 +382,430 @@ plt.title('Revenue vs Sales by Product')
 plt.show()
 
 df.to_csv("complete_practice!", index=False)
+
+import tensorflow as tf
+
+Отключение oneDNN сообщений
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# Отключение oneDNN custom operations
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
+
+
+#region создание неизменяемого тензора 
+a = tf.constant([[1, 2],
+             [2, 4],
+             [5, 8]], dtype=tf.float16)
+b = tf.constant([1, 3, 5, 7])
+c = tf.constant(1, shape=(1, 1))
+# print(a) -------------------------------
+# endregion
+
+#region создание переменной(изменяемого тензора)
+v1 = tf.Variable(-1.4)
+v2 = tf.Variable([1, 8, 2, 4], dtype= tf.float32)
+v3 = tf.Variable(b)
+# print(v1, v2, v3) ---------------------------
+# endregion
+
+#region изменение типа данных float32
+a2 = tf.cast(a, dtype=tf.float32)
+# print(a2) -----------------------
+# endregion
+
+#region преобразование тензора в массив numpy
+b2 = b.numpy()
+# print(b2) ---------------------------
+# endregion
+
+#region изменение значения при помощи assign
+v1.assign(4)
+# print(v1)---------------------------
+# endregion
+
+#region добавление значения к существующим при помощи assign_add
+v2.assign_add([1, 2, 4, 8])
+# print(v2)-------------------------------------
+# endregion
+
+#region удаление значения при помощи assign_sub
+v3.assign_sub([0, 2, 6, 2])
+# print(v3)---------------------------------
+# endregion
+
+#region обращен ие к элементам по индексу
+x_geth = tf.gather(v2, [0, 3])
+# print(x_geth)---------------------
+# endregion
+
+#region изменение размерности Тензора 
+
+
+a_shape = tf.Variable(range(30))
+a_resh = tf.reshape(a_shape, [5, 6])
+# print(a_resh)--------------------------
+# endregion
+
+#region вычисление значения производной
+
+x = tf.Variable(-2.0)
+
+with tf.GradientTape() as tape:
+    y = x ** 2
+
+df = tape.gradient(y, x)
+# print(df) ------------------------------
+# endregion
+
+#region нахождение производного
+w = tf.Variable(tf.random.normal(((3, 2))))
+b = tf.Variable(tf.zeros(2, dtype=tf.float32))
+x = tf.Variable([[-2.0, 1.0, 3.0]])
+
+with tf.GradientTape() as tape:
+    y = x @ w + b
+    loss = tf.reduce_mean(y ** 2)
+df = tape.gradient(loss, [w, b])
+# print(df[0], df[1], sep="\n")---------
+# endregion
+
+#region Task 1
+x = tf.Variable(5.0)
+with tf.GradientTape() as tape:
+    y = 3*x ** 2 + 2*x + 1
+
+grade = tape.gradient(y, x)
+# print(grade)
+# endregion
+
+#region Task 2
+x = tf.Variable(np.pi/2)
+
+with tf.GradientTape() as tape:
+    y = tf.sin(x) + x ** 2
+
+grade_2 = tape.gradient(y, x)
+# print(grade_2)
+# endregion
+
+#region Task 3
+x = tf.Variable(1.0)
+e = tf.Variable(np.e)
+
+with tf.GradientTape() as tape:
+    y = e * x
+
+grade_3 = tape.gradient(y, x)
+# print(grade_3)
+# endregion
+
+#region Task 4
+
+x = tf.Variable(1.0)
+y = tf.Variable(1.0)
+
+with tf.GradientTape() as tape:
+    f = x ** 2 + y ** 2
+
+grade_4 = tape.gradient(f, [x, y])
+# print(grade_4)
+# endregion
+
+# region Task 5
+x = tf.Variable(0.0)
+
+with tf.GradientTape() as tape:
+   sigmoida = 1 / (1 + tf.exp(-x))
+
+grade_6 = tape.gradient(sigmoida, x)
+# print(grade_6)
+# endregion
+
+# region main
+
+TOTAL_POINTS = 1000
+
+x = tf.random.uniform(shape=[TOTAL_POINTS], minval=0,maxval=10)
+noise = tf.random.normal(shape=[TOTAL_POINTS], stddev=0.2)
+
+k_true = 0.7
+b_true = 2.0
+
+y = x * k_true + b_true + noise
+
+plt.scatter(x, y, s=2)
+# plt.show()
+
+k = tf.Variable(0.0)
+b = tf.Variable(0.0)
+
+EPOCHS = 500
+learning_rate = 0.02
+
+
+
+for n in range(EPOCHS):
+    with tf.GradientTape() as tape:
+        f = k * x + b
+        loss = tf.reduce_mean(tf.square(y - f))
+
+    dk, db = tape.gradient(loss, [k, b])
+
+    k.assign_sub(learning_rate * dk)
+    b.assign_sub(learning_rate * db)
+
+print(k, b, sep="\n")
+
+y_pr = k * x+b
+plt.scatter(x, y, s=2, c="b")
+plt.scatter(x, y_pr, c="r", s=2)
+# plt.show()
+# endregion
+
+# region main_batch
+TOTAL_POINTS = 1000
+
+x = tf.random.uniform(shape=[TOTAL_POINTS], minval=0,maxval=10)
+noise = tf.random.normal(shape=[TOTAL_POINTS], stddev=0.2)
+
+k_true = 0.7
+b_true = 2.0
+
+y = x * k_true + b_true + noise
+
+plt.scatter(x, y, s=2)
+# plt.show()
+
+k = tf.Variable(0.0)
+b = tf.Variable(0.0)
+
+EPOCHS = 200
+learning_rate = 0.02
+
+BATCH_SIZE = 100
+num_steps = TOTAL_POINTS // BATCH_SIZE
+
+for n in range(EPOCHS):
+    for n_batch in range(num_steps):
+        y_batch = y[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+        x_batch = x[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+
+    with tf.GradientTape() as tape:
+        f = k * x_batch + b
+        loss = tf.reduce_mean(tf.square(y_batch - f))
+
+    dk, db = tape.gradient(loss, [k, b])
+
+    k.assign_sub(learning_rate * dk)
+    b.assign_sub(learning_rate * db)
+
+print(k, b, sep="\n")
+
+y_pr = k * x+b
+plt.scatter(x, y, s=2, c="b")
+plt.scatter(x, y_pr, c="r", s=2)
+# plt.show()
+
+
+# endregion
+
+# region main_SGD
+TOTAL_POINTS = 1000
+
+x = tf.random.uniform(shape=[TOTAL_POINTS], minval=0,maxval=10)
+noise = tf.random.normal(shape=[TOTAL_POINTS], stddev=0.2)
+
+k_true = 0.7
+b_true = 2.0
+
+y = x * k_true + b_true + noise
+
+plt.scatter(x, y, s=2)
+# plt.show()
+
+k = tf.Variable(0.0)
+b = tf.Variable(0.0)
+
+EPOCHS = 200
+learning_rate = 0.02
+
+BATCH_SIZE = 100
+num_steps = TOTAL_POINTS // BATCH_SIZE
+
+opt = tf.optimizers.SGD(learning_rate= 0.02, nesterov = True)
+
+for n in range(EPOCHS):
+    for n_batch in range(num_steps):
+        y_batch = y[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+        x_batch = x[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+
+    with tf.GradientTape() as tape:
+        f = k * x_batch + b
+        loss = tf.reduce_mean(tf.square(y_batch - f))
+
+    dk, db = tape.gradient(loss, [k, b])
+
+    # k.assign_sub(learning_rate * dk)
+    # b.assign_sub(learning_rate * db)
+    opt.apply_gradients(zip([dk, db], [k, b]))
+
+print(k, b, sep="\n")
+
+y_pr = k * x+b
+plt.scatter(x, y, s=2, c="b")
+plt.scatter(x, y_pr, c="r", s=2)
+# plt.show()
+
+
+# endregion
+
+# region main_Adagrad
+TOTAL_POINTS = 1000
+
+x = tf.random.uniform(shape=[TOTAL_POINTS], minval=0,maxval=10)
+noise = tf.random.normal(shape=[TOTAL_POINTS], stddev=0.2)
+
+k_true = 0.7
+b_true = 2.0
+
+y = x * k_true + b_true + noise
+
+plt.scatter(x, y, s=2)
+# plt.show()
+
+k = tf.Variable(0.0)
+b = tf.Variable(0.0)
+
+EPOCHS = 200
+learning_rate = 0.02
+
+BATCH_SIZE = 100
+num_steps = TOTAL_POINTS // BATCH_SIZE
+
+opt = tf.optimizers.Adagrad(learning_rate= 0.06)
+
+for n in range(EPOCHS):
+    for n_batch in range(num_steps):
+        y_batch = y[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+        x_batch = x[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+
+    with tf.GradientTape() as tape:
+        f = k * x_batch + b
+        loss = tf.reduce_mean(tf.square(y_batch - f))
+
+    dk, db = tape.gradient(loss, [k, b])
+
+    # k.assign_sub(learning_rate * dk)
+    # b.assign_sub(learning_rate * db)
+    opt.apply_gradients(zip([dk, db], [k, b]))
+
+print(k, b, sep="\n")
+
+y_pr = k * x+b
+plt.scatter(x, y, s=2, c="b")
+plt.scatter(x, y_pr, c="r", s=2)
+# plt.show()
+
+
+# endregion
+
+# region main_Adadelta
+
+TOTAL_POINTS = 1000
+
+x = tf.random.uniform(shape=[TOTAL_POINTS], minval=0,maxval=10)
+noise = tf.random.normal(shape=[TOTAL_POINTS], stddev=0.2)
+
+k_true = 0.7
+b_true = 2.0
+
+y = x * k_true + b_true + noise
+
+plt.scatter(x, y, s=2)
+# plt.show()
+
+k = tf.Variable(0.0)
+b = tf.Variable(0.0)
+
+EPOCHS = 200
+learning_rate = 0.02
+
+BATCH_SIZE = 100
+num_steps = TOTAL_POINTS // BATCH_SIZE
+
+opt = tf.optimizers.Adadelta(learning_rate= 5.00)
+
+for n in range(EPOCHS):
+    for n_batch in range(num_steps):
+        y_batch = y[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+        x_batch = x[n_batch * BATCH_SIZE : (n_batch+1) * BATCH_SIZE]
+
+    with tf.GradientTape() as tape:
+        f = k * x_batch + b
+        loss = tf.reduce_mean(tf.square(y_batch - f))
+
+    dk, db = tape.gradient(loss, [k, b])
+
+    # k.assign_sub(learning_rate * dk)
+    # b.assign_sub(learning_rate * db)
+    opt.apply_gradients(zip([dk, db], [k, b]))
+
+print(k, b, sep="\n")
+
+y_pr = k * x+b
+plt.scatter(x, y, s=2, c="b")
+plt.scatter(x, y_pr, c="r", s=2)
+# plt.show()
+
+
+# endregion
+
+# region Модель tf.Model
+
+class DenseNN(tf.Module):
+    def __init__(self, outputs):
+        super().__init__()
+        self.outputs = outputs
+        self.fl_init = False
+
+    def __call__(self, x):
+        if not self.fl_init:
+            self.w = tf.random.truncated_normal((x.shape[-1], self.outputs), stddev=0.1, name="w")
+            self.b = tf.zeros([self.outputs], dtype=tf.float32, name="b")
+
+            self.w = tf.Variable(self.w)
+            self.b = tf.Variable(self.b)
+
+            self.fl_init = True
+
+        y = x @ self.w + self.b
+        return y
+
+
+model = DenseNN(1)
+#print( model(tf.constant([[1.0, 2.0]])) )
+
+x_train = tf.random.uniform(minval=0, maxval=10, shape=(100, 2))
+y_train = [a + b for a, b in x_train]
+
+loss = lambda x, y: tf.reduce_mean(tf.square(x - y))
+opt = tf.optimizers.Adam(learning_rate=0.01)
+
+EPOCHS = 50
+for n in range(EPOCHS):
+    for x, y in zip(x_train, y_train):
+        x = tf.expand_dims(x, axis=0)
+        y = tf.constant(y, shape=(1, 1))
+
+        with tf.GradientTape() as tape:
+            f_loss = loss(y, model(x))
+
+        grads = tape.gradient(f_loss, model.trainable_variables)
+        opt.apply_gradients(zip(grads, model.trainable_variables))
+
+    print(f_loss.numpy())
+
+print(model.trainable_variables)
+
+# endregion
